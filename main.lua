@@ -1,49 +1,50 @@
-repeat wait() until game:IsLoaded()
+-- [[ AXION SCRIPT - THE FORGE MODULE ]] --
+print("The Forge Script a fost incarcat cu succes!")
 
--- [[ CONFIGURARE ]] --
-local ScriptName = "Ionut Scripts"
-local Creator = "Ionut"
-
--- Identificare Executor
-local name, version = identifyexecutor()
-print("Executor detectat:", name, "Versiune:", version)
-
--- Tabel cu link-urile tale de pe GitHub (folosim formatul tau nou)
-local PlaceIds = {
-    [76558904092080] = "https://raw.githubusercontent.com/Ionutz547/AxionScript/main/the_forge.lua",
-    [2788229376] = "https://raw.githubusercontent.com/Ionutz547/AxionScript/main/script_dahood.lua",
-    [155615604] = "https://raw.githubusercontent.com/Ionutz547/AxionScript/main/script_prison.lua",
-}
-
-local currentPlaceId = game.PlaceId
-
--- Notificare de pornire
+-- Notificare de confirmare in joc
 game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = ScriptName,
-    Text = "Se verifica compatibilitatea pentru " .. Creator .. "...",
+    Title = "Axion Script",
+    Text = "Module: The Forge activat!",
     Duration = 5
 })
 
--- Verificare daca jocul are script in lista
-if PlaceIds[currentPlaceId] then
-    print("Loading script pentru PlaceID: " .. currentPlaceId)
-    
-    -- Incarcare sigura a scriptului (nu da crash daca link-ul e gresit)
-    local success, result = pcall(function()
-        return loadstring(game:HttpGet(PlaceIds[currentPlaceId]))()
-    end)
-    
-    if success then
-        print("✓ " .. ScriptName .. " incarcat cu succes!")
-    else
-        warn("✗ Eroare la incarcarea codului: " .. tostring(result))
+-- [[ FUNCTII DE BAZA ]] --
+
+-- 1. WalkSpeed & JumpPower (Viteza si Saritura)
+local UserInputService = game:GetService("UserInputService")
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+humanoid.WalkSpeed = 50 -- Schimba viteza de miscare (default e 16)
+humanoid.JumpPower = 100 -- Schimba puterea sariturii (default e 50)
+humanoid.UseJumpPower = true
+
+-- 2. Infinite Jump (Saritura infinita)
+UserInputService.JumpRequest:Connect(function()
+    humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+end)
+
+-- 3. ESP Simplu (Vezi jucatorii prin pereti)
+local function createESP(p)
+    if p ~= player then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "AxionESP"
+        highlight.FillColor = Color3.fromRGB(255, 0, 0)
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.FillTransparency = 0.5
+        
+        local function applyESP(char)
+            highlight.Parent = char
+        end
+        
+        if p.Character then applyESP(p.Character) end
+        p.CharacterAdded:Connect(applyESP)
     end
-else
-    -- Daca jocul nu e in lista
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Eroare",
-        Text = "Joc nesuportat! ID: " .. currentPlaceId,
-        Duration = 10
-    })
-    warn("✗ Nu a fost gasit un script pentru ID-ul: " .. currentPlaceId)
 end
+
+-- Aplica ESP pentru jucatorii actuali si cei noi
+for _, v in pairs(game.Players:GetPlayers()) do createESP(v) end
+game.Players.PlayerAdded:Connect(createESP)
+
+print("Toate functiile au fost activate!")
